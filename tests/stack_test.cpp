@@ -1,17 +1,27 @@
+// Юнит-тесты класса TStack<T> (фреймворк Google Test).
+// Класс объявлен в include/stack.hpp, реализация — в src/main.cpp.
 #include <gtest/gtest.h>
 #include "stack.hpp"
 
 #include <stdexcept>
 #include <string>
 
+// Демонстрационная функция из src/main.cpp (тот же сценарий, что и в stack_app).
+// verbose=false — прогоняем её без печати, только ради проверки результата.
+int run_demo(bool verbose);
+
 // ==================== Базовое поведение ====================
 
+// Тест: стек, созданный конструктором по умолчанию (без аргументов),
+// должен быть пустым: empty() == true, size() == 0.
 TEST(TStackTest, DefaultConstructedIsEmpty) {
     TStack<int> s;
     EXPECT_TRUE(s.empty());
     EXPECT_EQ(s.size(), 0u);
 }
 
+// Тест: push() увеличивает размер стека, а top() возвращает
+// именно последний добавленный элемент (последним кладём 3 — его и ждём).
 TEST(TStackTest, PushIncreasesSizeAndTopReturnsLast) {
     TStack<int> s(5);
     s.push(1);
@@ -23,6 +33,8 @@ TEST(TStackTest, PushIncreasesSizeAndTopReturnsLast) {
     EXPECT_EQ(s.top(), 3);
 }
 
+// Тест: pop() удаляет верхний элемент — после удаления 20 на вершине
+// оказывается 10, а после второго pop() стек полностью пуст.
 TEST(TStackTest, PopRemovesTopElement) {
     TStack<int> s(5);
     s.push(10);
@@ -37,6 +49,9 @@ TEST(TStackTest, PopRemovesTopElement) {
     EXPECT_EQ(s.size(), 0u);
 }
 
+// Тест порядка LIFO (last in, first out): загоняем в стек слово "hello"
+// по буквам и извлекаем через top()+pop() — на выходе должно получиться
+// обратное слово "olleh", то есть элементы отдаются в обратном порядке.
 TEST(TStackTest, LifoOrder) {
     TStack<char> s(10);
     const std::string word = "hello";
@@ -53,6 +68,8 @@ TEST(TStackTest, LifoOrder) {
     EXPECT_EQ(out, "olleh");
 }
 
+// Тест: неконстантная версия top() возвращает модифицируемую ссылку —
+// можно изменить верхний элемент напрямую через присваивание s.top() = 42.
 TEST(TStackTest, TopMutableReferenceAllowsModification) {
     TStack<int> s(3);
     s.push(1);
@@ -60,6 +77,8 @@ TEST(TStackTest, TopMutableReferenceAllowsModification) {
     EXPECT_EQ(s.top(), 42);
 }
 
+// Тест: const-версия top() доступна для константной ссылки на стек
+// и корректно возвращает верхний элемент для чтения.
 TEST(TStackTest, ConstTopWorks) {
     TStack<int> s(3);
     s.push(7);
@@ -69,6 +88,9 @@ TEST(TStackTest, ConstTopWorks) {
 
 // ==================== Исключения ====================
 
+// Тест: push() в полный стек (вместимость 2, уже лежат 2 элемента)
+// бросает std::overflow_error, при этом состояние стека не меняется:
+// размер остаётся 2, верхний элемент — 2 (неудачная вставка безопасна).
 TEST(TStackTest, PushOnFullStackThrowsOverflow) {
     TStack<int> s(2);
     s.push(1);
@@ -79,16 +101,22 @@ TEST(TStackTest, PushOnFullStackThrowsOverflow) {
     EXPECT_EQ(s.top(), 2);
 }
 
+// Тест: стек нулевой вместимости (создан без размера) сразу переполнен —
+// любой push() обязан бросить std::overflow_error.
 TEST(TStackTest, ZeroCapacityStackThrowsOnPush) {
     TStack<int> s;
     EXPECT_THROW(s.push(1), std::overflow_error);
 }
 
+// Тест: pop() на пустом стеке бросает std::underflow_error
+// (удалять нечего — операция запрещена).
 TEST(TStackTest, PopOnEmptyStackThrowsUnderflow) {
     TStack<int> s(5);
     EXPECT_THROW(s.pop(), std::underflow_error);
 }
 
+// Тест: top() на пустом стеке бросает std::underflow_error — как до
+// единственного push(), так и после того, как единственный элемент удалён.
 TEST(TStackTest, TopOnEmptyStackThrowsUnderflow) {
     TStack<int> s(5);
     EXPECT_THROW(s.top(), std::underflow_error);
@@ -98,6 +126,8 @@ TEST(TStackTest, TopOnEmptyStackThrowsUnderflow) {
     EXPECT_THROW(s.top(), std::underflow_error);
 }
 
+// Тест: const-версия top() на пустом стеке тоже бросает
+// std::underflow_error (проверяется та же защита для константного доступа).
 TEST(TStackTest, ConstTopOnEmptyStackThrowsUnderflow) {
     TStack<int> s(5);
     const TStack<int>& cs = s;
@@ -106,6 +136,8 @@ TEST(TStackTest, ConstTopOnEmptyStackThrowsUnderflow) {
 
 // ==================== Копирование и присваивание ====================
 
+// Тест: конструктор копирования переносит все элементы — копия содержит
+// те же 3 элемента, что и оригинал (размер 3, на вершине 3).
 TEST(TStackTest, CopyConstructorCopiesElements) {
     TStack<int> s(5);
     s.push(1);
@@ -117,6 +149,9 @@ TEST(TStackTest, CopyConstructorCopiesElements) {
     EXPECT_EQ(copy.top(), 3);
 }
 
+// Тест глубокого копирования: после добавления 99 в копию оригинал
+// обязан остаться неизменным (верхний элемент 2, размер 2). Если бы
+// копирование было поверхностным (общий буфер), эти проверки упали бы.
 TEST(TStackTest, CopyIsDeep) {
     TStack<int> s(5);
     s.push(1);
@@ -131,6 +166,8 @@ TEST(TStackTest, CopyIsDeep) {
     EXPECT_EQ(copy.size(), 3u);
 }
 
+// Тест: копирование пустого (но с ненулевой вместимостью) стека даёт
+// корректный пустой стек — size() == 0, empty() == true.
 TEST(TStackTest, CopyOfEmptyStack) {
     TStack<int> s(5);
     TStack<int> copy(s);
@@ -138,6 +175,9 @@ TEST(TStackTest, CopyOfEmptyStack) {
     EXPECT_EQ(copy.size(), 0u);
 }
 
+// Тест: копирование стека нулевой вместимости не приводит к ошибке
+// (не должно быть разыменования nullptr при копировании) — копия тоже
+// пуста и отвергает любой push() через std::overflow_error.
 TEST(TStackTest, CopyOfZeroCapacityStack) {
     TStack<int> s;
     TStack<int> copy(s);
@@ -145,6 +185,10 @@ TEST(TStackTest, CopyOfZeroCapacityStack) {
     EXPECT_THROW(copy.push(1), std::overflow_error);
 }
 
+// Тест: оператор присваивания копирует состояние — b после `b = a`
+// содержит элементы a. Дополнительно проверяются: новая вместимость b
+// равна вместимости источника (push(3) проходит, хотя раньше b имел
+// вместимость 1) и глубина копирования (a не изменился).
 TEST(TStackTest, AssignmentOperatorCopiesState) {
     TStack<int> a(5);
     a.push(1);
@@ -162,6 +206,9 @@ TEST(TStackTest, AssignmentOperatorCopiesState) {
     EXPECT_EQ(a.top(), 2);  // a не изменился — копирование глубокое
 }
 
+// Тест защиты от самоприсваивания (`s = s`): реализация сверяет адреса
+// this и other и ничего не освобождает — данные остаются целыми.
+// Без этой защиты delete[] собственного буфера привёл бы к UB.
 TEST(TStackTest, SelfAssignmentIsSafe) {
     TStack<int> s(3);
     s.push(1);
@@ -173,6 +220,9 @@ TEST(TStackTest, SelfAssignmentIsSafe) {
     EXPECT_EQ(s.top(), 2);
 }
 
+// Тест: присваивание пустого стека (вместимость 0) непустому — b
+// полностью принимает состояние a: становится пустым и больше не
+// принимает элементы (push бросает std::overflow_error).
 TEST(TStackTest, AssignEmptyToNonEmpty) {
     TStack<int> a;             // нулевая вместимость
     TStack<int> b(5);
@@ -186,6 +236,8 @@ TEST(TStackTest, AssignEmptyToNonEmpty) {
 
 // ==================== Работа с другими типами ====================
 
+// Тест: шаблон корректно работает с не- POD типом std::string —
+// push/pop/top сохраняют строки в правильном порядке.
 TEST(TStackTest, WorksWithStrings) {
     TStack<std::string> s(3);
     s.push("alpha");
@@ -196,6 +248,8 @@ TEST(TStackTest, WorksWithStrings) {
     EXPECT_EQ(s.top(), "alpha");
 }
 
+// Тест: работа с вещественным типом double — значения хранятся точно
+// (сравнение EXPECT_DOUBLE_EQ учитывает погрешность чисел с плавающей точкой).
 TEST(TStackTest, WorksWithDoubles) {
     TStack<double> s(2);
     s.push(3.14);
@@ -203,8 +257,18 @@ TEST(TStackTest, WorksWithDoubles) {
     EXPECT_DOUBLE_EQ(s.top(), 2.71);
 }
 
-// ==================== Интеграционный тест (сценарий из main) ====================
+// ==================== Интеграционные тесты (сценарий из main) ====================
 
+// Тест: интеграционный сценарий демонстрационной программы run_demo()
+// из src/main.cpp вызывается без вывода на экран; успешное выполнение
+// всего сценария подтверждается возвратом количества шагов (5).
+TEST(TStackTest, RunDemoScenarioCompletesWithoutExceptions) {
+    EXPECT_EQ(run_demo(false), 5);
+}
+
+// Тест: пошаговое воспроизведение того же сценария, что и в демо,
+// но с явной проверкой каждого этапа: push×3 → size/top → pop →
+// конструктор копирования (глубина) → оператор присваивания.
 TEST(TStackTest, MainScenario) {
     TStack<int> s(5);
     s.push(10);

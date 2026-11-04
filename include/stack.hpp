@@ -3,10 +3,17 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <iostream>   // нужен демо-примеру run_demo() в src/main.cpp
+#include <string>     // используется тестами (TStack<std::string>)
+
+using std::size_t;
 
 // Стек с фиксированной вместимостью (capacity).
 // При переполнении push() бросает std::overflow_error,
 // при обращении к пустому стеку pop()/top() бросают std::underflow_error.
+//
+// В заголовочном файле находится только определение класса;
+// вся реализация методов вынесена в src/main.cpp.
 template <typename T>
 class TStack {
 private:
@@ -15,86 +22,36 @@ private:
     size_t count;
 
 public:
-    explicit TStack(size_t sz = 0)
-        : mem(sz == 0 ? nullptr : new T[sz]), capacity(sz), count(0) {}
+    explicit TStack(size_t sz = 0);
 
-    TStack(const TStack& other)
-        : mem(other.capacity == 0 ? nullptr : new T[other.capacity]),
-          capacity(other.capacity), count(other.count) {
-        copyElements(other);
-    }
+    TStack(const TStack& other);
 
-    ~TStack() {
-        delete[] mem;
-    }
+    ~TStack();
 
-    TStack& operator=(const TStack& other) {
-        if (this == &other)
-            return *this;
+    TStack& operator=(const TStack& other);
 
-        T* tmp = other.capacity == 0 ? nullptr : new T[other.capacity];
-        if (tmp != nullptr) {
-            for (size_t i = 0; i < other.count; ++i) {
-                tmp[i] = other.mem[i];
-            }
-        }
+    bool empty() const;
 
-        delete[] mem;
-        mem = tmp;
-        capacity = other.capacity;
-        count = other.count;
+    size_t size() const;
 
-        return *this;
-    }
+    size_t cap() const;
 
-    bool empty() const {
-        return count == 0;
-    }
+    void push(const T& value);
 
-    size_t size() const {
-        return count;
-    }
+    void pop();
 
-    size_t cap() const {
-        return capacity;
-    }
+    T& top();
 
-    void push(const T& value) {
-        if (count == capacity) {
-            throw std::overflow_error("stack overflow");
-        }
-        mem[count++] = value;
-    }
-
-    void pop() {
-        if (count == 0) {
-            throw std::underflow_error("stack is empty");
-        }
-        --count;
-    }
-
-    T& top() {
-        if (count == 0) {
-            throw std::underflow_error("stack is empty");
-        }
-        return mem[count - 1];
-    }
-
-    const T& top() const {
-        if (count == 0) {
-            throw std::underflow_error("stack is empty");
-        }
-        return mem[count - 1];
-    }
+    const T& top() const;
 
 private:
-    void copyElements(const TStack& other) {
-        if (mem == nullptr)
-            return;
-        for (size_t i = 0; i < other.count; ++i) {
-            mem[i] = other.mem[i];
-        }
-    }
+    void copyElements(const TStack& other);
 };
+
+// Подключение реализации шаблонных методов.
+// Тела шаблонных методов должны быть видны компилятору в точке
+// инстанцирования, поэтому реализация из src/main.cpp подключается
+// через #include сразу после определения класса.
+#include "../src/main.cpp"
 
 #endif // TSTACK_HPP
