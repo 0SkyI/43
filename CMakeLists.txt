@@ -5,13 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ---------- Основной исполняемый файл ----------
-# include/stack.hpp содержит только определение класса TStack<T>,
-# а реализация методов находится в src/main.cpp (подключается через #include,
-# так как тела шаблонных методов должны быть видны в точке инстанцирования).
-# Точка входа — src/app_main.cpp; src/main.cpp попадает в сборку
-# автоматически через #include в include/stack.hpp.
-add_executable(stack_app src/app_main.cpp)
-target_include_directories(stack_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# Весь класс TStack<T> (определение + реализация) и демо находятся в main.cpp.
+add_executable(stack_app main.cpp)
 
 # ---------- Тесты GoogleTest ----------
 option(BUILD_TESTS "Build unit tests" ON)
@@ -29,8 +24,9 @@ if(BUILD_TESTS)
 
     enable_testing()
 
+    # tests/stack_test.cpp подключает реализацию через #include "../main.cpp",
+    # поэтому собирается как единственный трансляционный блок.
     add_executable(stack_tests tests/stack_test.cpp)
-    target_include_directories(stack_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(stack_tests PRIVATE GTest::gtest)
 
     include(GoogleTest)

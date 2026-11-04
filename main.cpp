@@ -1,10 +1,54 @@
+// Шаблонный стек фиксированной вместимости TStack<T> + демонстрационный пример.
+//
+// Всё в одном файле: определение класса, реализация методов и main().
+// Юнит-тесты Google Test (tests/stack_test.cpp) подключают этот файл
+// через #include и проверяют каждый метод стека.
+
+#include <cstddef>
+#include <stdexcept>
+#include <iostream>
+#include <string>
+
+using std::size_t;
+
+// Стек с фиксированной вместимостью (capacity).
+// При переполнении push() бросает std::overflow_error,
+// при обращении к пустому стеку pop()/top() бросают std::underflow_error.
+template <typename T>
+class TStack {
+private:
+    T* mem;
+    size_t capacity;
+    size_t count;
+
+public:
+    explicit TStack(size_t sz = 0);
+
+    TStack(const TStack& other);
+
+    ~TStack();
+
+    TStack& operator=(const TStack& other);
+
+    bool empty() const;
+
+    size_t size() const;
+
+    size_t cap() const;
+
+    void push(const T& value);
+
+    void pop();
+
+    T& top();
+
+    const T& top() const;
+
+private:
+    void copyElements(const TStack& other);
+};
+
 // ==================== Реализация TStack<T> ====================
-// Все методы шаблонного класса TStack реализованы здесь.
-// Файл подключается в конце include/stack.hpp через #include,
-// чтобы тела шаблонных методов были доступны в точке инстанцирования.
-// Поэтому собственных #include здесь быть не должно — стандартные
-// заголовки (<cstddef>, <stdexcept>, <iostream>, <string>) уже
-// подключены в stack.hpp до этого включения.
 
 template <typename T>
 TStack<T>::TStack(size_t sz)
@@ -100,12 +144,11 @@ void TStack<T>::copyElements(const TStack& other) {
 
 // ==================== Демонстрационный пример ====================
 
-// Демонстрационная функция (вызывается из main ниже, а также используется
-// интеграционным тестом MainScenario в tests/stack_test.cpp).
-// Возвращает количество выполненных шагов сценария; при исключении — -1.
-// verbose == true печатает сообщения (используется в main);
-// verbose == false запускает тот же сценарий без вывода (используется тестами).
-int run_demo(bool verbose = true) {
+// Точка входа приложения stack_app.
+// В тестовой сборке (tests/stack_test.cpp) определение main() подавляется
+// макросом STACK_SKIP_MAIN — там собственная точка входа Google Test.
+#ifndef STACK_SKIP_MAIN
+int main() {
     int steps = 0;
     try {
         // Создаём стек вместимостью 5 элементов
@@ -118,36 +161,37 @@ int run_demo(bool verbose = true) {
         ++steps;
 
         // Проверяем размер и верхний элемент
-        if (verbose) std::cout << "Size: " << s.size() << '\n';
-        if (verbose) std::cout << "Top: " << s.top() << '\n';
+        std::cout << "Size: " << s.size() << '\n';
+        std::cout << "Top: " << s.top() << '\n';
 
         // Удаляем верхний элемент
         s.pop();
         ++steps;
-        if (verbose) std::cout << "Top after pop: " << s.top() << '\n';
+        std::cout << "Top after pop: " << s.top() << '\n';
 
         // Проверяем конструктор копирования
         TStack<int> s2 = s;
         ++steps;
-        if (verbose) std::cout << "s2 top: " << s2.top() << '\n';
+        std::cout << "s2 top: " << s2.top() << '\n';
 
         // Изменяем s2, проверяем, что s не изменился
         s2.push(99);
         ++steps;
-        if (verbose) std::cout << "s top: " << s.top() << '\n';
-        if (verbose) std::cout << "s2 top: " << s2.top() << '\n';
+        std::cout << "s top: " << s.top() << '\n';
+        std::cout << "s2 top: " << s2.top() << '\n';
 
         // Проверяем оператор присваивания
         TStack<int> s3(2);
         s3 = s;
         ++steps;
-        if (verbose) std::cout << "s3 size: " << s3.size() << '\n';
+        std::cout << "s3 size: " << s3.size() << '\n';
 
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << '\n';
         return -1;
     }
-    return steps;
+    std::cout << "Demo finished, steps: " << steps << '\n';
+    return 0;
 }
 
-
+#endif // STACK_SKIP_MAIN
