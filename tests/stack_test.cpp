@@ -1,16 +1,9 @@
-// Юнит-тесты класса TStack<T> (фреймворк Google Test).
-// Весь класс (определение + реализация) находится в main.cpp —
-// подключаем его сюда через #include. Макрос STACK_SKIP_MAIN
-// отключает демонстрационный main() из main.cpp, чтобы не было
-// конфликта с точкой входа Google Test внизу этого файла.
 #include <gtest/gtest.h>
 #define STACK_SKIP_MAIN
-#include "../main.cpp"
+#include "../tstack.cpp"
 
 #include <stdexcept>
 #include <string>
-
-// ==================== Базовое поведение ====================
 
 // Тест: стек, созданный конструктором по умолчанию (без аргументов),
 // должен быть пустым: empty() == true, size() == 0.
@@ -49,7 +42,7 @@ TEST(TStackTest, PopRemovesTopElement) {
     EXPECT_EQ(s.size(), 0u);
 }
 
-// Тест порядка LIFO (last in, first out): загоняем в стек слово "hello"
+// Тест порядка LIFO (last in, first out): ложим в стек слово "hello"
 // по буквам и извлекаем через top()+pop() — на выходе должно получиться
 // обратное слово "olleh", то есть элементы отдаются в обратном порядке.
 TEST(TStackTest, LifoOrder) {
@@ -257,11 +250,8 @@ TEST(TStackTest, WorksWithDoubles) {
     EXPECT_DOUBLE_EQ(s.top(), 2.71);
 }
 
-// ==================== Интеграционные тесты (сценарий из main) ====================
+// ==================== сценарий из main ====================
 
-// Тест: пошаговое воспроизведение того же сценария, что и в демо-программе
-// main() в main.cpp, но с явной проверкой каждого этапа: push×3 → size/top →
-// pop → конструктор копирования (глубина) → оператор присваивания.
 TEST(TStackTest, MainScenario) {
     TStack<int> s(5);
     s.push(10);
